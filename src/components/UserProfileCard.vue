@@ -17,7 +17,11 @@
             <li><strong>{{user.Followers.length}}</strong> followers (追隨者)</li>
           </ul>
           <p>
-              <a href="/users/2/edit"><button type="submit" class="btn btn-primary">edit</button></a>
+              <router-link
+                :to="{name:'user-profile-edit',params: {id: user.id}}"
+              >
+                <button type="submit" class="btn btn-primary">edit</button>
+              </router-link>
           </p>
         </div>
       </div>

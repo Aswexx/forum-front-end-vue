@@ -10,7 +10,42 @@ const routes = [
   {
     path: '/',
     name: 'root',
-    redirect: '/rests'
+    redirect: '/signin'
+  },
+  {
+    path: '/admin',
+    exact: true,
+    redirect:'/admin/rests'
+  },
+  {
+    path: '/admin/rests',
+    name: 'admin-rests',
+    component: () => import('../views/AdminRestsView.vue')
+  },
+  {
+    path: '/admin/users',
+    name: 'admin-users',
+    component: () => import('../views/UserRoleManageView.vue')
+  },
+  {
+    path: '/admin/categories',
+    name: 'admin-categories',
+    component: () => import('../views/AdminCategoriesView.vue')
+  },
+  {
+    path: '/admin/restaurants/new',
+    name: 'admin-restaurant-new',
+    component: () => import('../views/AdminRestNewView.vue')
+  },
+  {
+    path: '/admin/restaurants/:id/edit',
+    name: 'admin-restaurant-edit',
+    component: () => import('../views/AdminRestEditView.vue')
+  },
+  {
+    path: '/admin/restaurants/:id',
+    name: 'admin-restaurant',
+    component: () => import('../views/AdminRestView.vue')
   },
   {
     path: '/signup',
@@ -41,6 +76,11 @@ const routes = [
     path: '/users/tops',
     name: 'users-top',
     component: () => import('../views/UsersTopView.vue')
+  },
+  {
+    path: '/users/:id/edit',
+    name: 'user-profile-edit',
+    component: () => import('../views/UserEditView.vue')
   },
   {
     path: '/users/:id',
