@@ -3,8 +3,20 @@ import VueRouter from 'vue-router'
 import NotFoundView from '../views/NotFoundView.vue'
 import SignInView from '../views/SignInView.vue'
 import RestsView from '../views/RestsView.vue'
+import store from './../store'
 
 Vue.use(VueRouter)
+
+const authorizeIsAdmin = (to, from, next) => {
+  const currentUser = store.state.currentUser
+  if (currentUser && !currentUser.isAdmin) {
+    next('/404')
+    return
+  }
+
+  next()
+}
+
 
 const routes = [
   {
@@ -20,32 +32,38 @@ const routes = [
   {
     path: '/admin/rests',
     name: 'admin-rests',
-    component: () => import('../views/AdminRestsView.vue')
+    component: () => import('../views/AdminRestsView.vue'),
+    beforeEnter: authorizeIsAdmin
   },
   {
     path: '/admin/users',
     name: 'admin-users',
-    component: () => import('../views/UserRoleManageView.vue')
+    component: () => import('../views/UserRoleManageView.vue'),
+    beforeEnter: authorizeIsAdmin
   },
   {
     path: '/admin/categories',
     name: 'admin-categories',
-    component: () => import('../views/AdminCategoriesView.vue')
+    component: () => import('../views/AdminCategoriesView.vue'),
+    beforeEnter: authorizeIsAdmin
   },
   {
     path: '/admin/restaurants/new',
     name: 'admin-restaurant-new',
-    component: () => import('../views/AdminRestNewView.vue')
+    component: () => import('../views/AdminRestNewView.vue'),
+    beforeEnter: authorizeIsAdmin
   },
   {
     path: '/admin/restaurants/:id/edit',
     name: 'admin-restaurant-edit',
-    component: () => import('../views/AdminRestEditView.vue')
+    component: () => import('../views/AdminRestEditView.vue'),
+    beforeEnter: authorizeIsAdmin
   },
   {
     path: '/admin/restaurants/:id',
     name: 'admin-restaurant',
-    component: () => import('../views/AdminRestView.vue')
+    component: () => import('../views/AdminRestView.vue'),
+    beforeEnter: authorizeIsAdmin
   },
   {
     path: '/signup',
@@ -107,6 +125,34 @@ const routes = [
 const router = new VueRouter({
   linkExactActiveClass: 'active',
   routes
+})
+
+router.beforeEach(async (to, from, next) => {
+  const tokenInLocalStorage = localStorage.getItem('token')
+  const tokenInStore = store.state.token
+  let isAuthenticated = store.state.isAuthenticated
+
+  // 比較 localStorage 和 store 中的 token 是否一樣
+  if (tokenInLocalStorage && tokenInLocalStorage !== tokenInStore) {
+    isAuthenticated = await store.dispatch('fetchCurrentUser')
+  }
+
+  // 對於不需要驗證 token 的頁面
+  const pathsWithoutAuthentication = ['sign-up', 'sign-in']
+
+  // 如果 token 無效且進入需要驗證的頁面則轉址到登入頁
+  if (!isAuthenticated && !pathsWithoutAuthentication.includes(to.name)) {
+    next('/signin')
+    return
+  }
+
+
+  // 如果 token 有效且進入不需要驗證到頁面則轉址到餐廳首頁
+  if (isAuthenticated && pathsWithoutAuthentication.includes(to.name)) {
+    next('/restaurants')
+    return
+  }
+  next()
 })
 
 export default router

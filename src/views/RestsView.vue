@@ -24,6 +24,10 @@
         :previous-page="previousPage"
         :next-page="nextPage"
     />
+
+    <div v-if="restaurants.length < 1">
+      此類別目前無餐廳資料
+    </div>
   </div>
 </template>
 
@@ -46,7 +50,8 @@ export default {
 			currentPage: 1,
 			totalPage: [],
 			previousPage: -1,
-			nextPage: -1
+			nextPage: -1,
+      restaurant: ''
     }
   },
   components: {
@@ -78,7 +83,6 @@ export default {
         this.previousPage = prev
         this.nextPage = next
 
-				console.log(response)
 
 				if  (response.statusText !== 'OK'){
 					throw new Error(response.statusText)
@@ -90,8 +94,47 @@ export default {
 					title: '無法取得餐廳資料，請稍後再試'
 				})
       }
+    },
+    async fetchRestaurant (restaurantId) {
+      try {
+        const { data } = await restaurantsAPI.getRestaurant({ restaurantId })
+
+        const { restaurant, isFavorited, isLiked } = data
+        const {
+          id,
+          name,
+          Category,
+          image,
+          opening_hours: openingHours,
+          tel,
+          address,
+          description,
+          Comments
+        } = restaurant
+
+        this.restaurant = {
+          id,
+          name,
+          categoryName: Category ? Category.name : '未分類',
+          image,
+          openingHours,
+          tel,
+          address,
+          description,
+          isFavorited,
+          isLiked
+        }
+
+        this.restaurantComments = Comments
+      } catch (error) {
+        // STEP 6: 透過 restaurantsAPI 取得餐廳資訊
+        Toast.fire({
+          icon: 'error',
+          title: '無法取得餐廳資料，請稍後再試'
+        })
+      }
     }
-	},
+  },
 	created () {
     const { page = '', categoryId = '' } = this.$route.query
     this.fetchRestaurants({ queryPage: page, queryCategoryId: categoryId })

@@ -10,7 +10,7 @@
       >
         <h4>
           <router-link 
-            :to="{ name: 'rest', params: {id: restaurant.id}}">
+            :to="{ name: 'rest', params: {id: rest.id}}">
             {{rest.name}}
           </router-link>
           <small>{{rest.Category ? rest.Category.name : '未分類'}}</small>

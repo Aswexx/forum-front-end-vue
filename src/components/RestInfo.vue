@@ -74,6 +74,19 @@
 
 <script>
 export default {
+  data () {
+    return {
+      restaurant: this.initialRestaurant
+    }
+  },
+  watch: {
+    initialRestaurant (newValue) {
+      this.restaurant = {
+        ...this.restaurant,
+        ...newValue
+      }
+    }
+  },
   props:{
     rest: {
       type: Object,

@@ -9,8 +9,8 @@
           name="name"
           class="form-control"
           required
-          :placeholder="user.name"
-          v-model='editingName'
+          :placeholder="name"
+          v-model='name'
         >
       </div>
 
@@ -20,7 +20,7 @@
           class='d-block'
           width="200"
           height='200'
-          :src='user.image'
+          :src='image'
         >
 
         <label for="image">Image</label>
@@ -45,58 +45,29 @@
 </template>
 
 <script>
-const dummyData = {
-    "users": [
-        {
-            "id": 1,
-            "name": "root",
-            "email": "root@example.com",
-            "password": "$2a$10$WtyHL2DW5b/05zfLaapPFelQLj.Wg7PvV1bnlHk2Nd5gMFsfXIlK2",
-            "isAdmin": true,
-            "image": 'https://www.likejapan.com/wp-content/uploads/2016/03/editors/382/20160301113920_qTELNhPE.jpg',
-            "createdAt": "2022-04-18T10:28:21.000Z",
-            "updatedAt": "2022-04-18T10:28:21.000Z",
-            "Followers": [],
-            "FollowerCount": 0,
-            "isFollowed": false
-        },
-        {
-            "id": 2,
-            "name": "user1",
-            "email": "user1@example.com",
-            "password": "$2a$10$872Xt5tAOXE/G822Juub6uyw09W1qsit5s9bW7qDlIVD5PvoITBQW",
-            "isAdmin": false,
-            "image": 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTPghpxK1nWM9aFOtQx0cxCVu_wCS8GV7rxMavylD0Nii1KobSlWyqSrFHk4UoCYg_ahl0&usqp=CAU',
-            "createdAt": "2022-04-18T10:28:21.000Z",
-            "updatedAt": "2022-04-18T10:28:21.000Z",
-            "Followers": [],
-            "FollowerCount": 0,
-            "isFollowed": false
-        },
-        {
-            "id": 3,
-            "name": "user2",
-            "email": "user2@example.com",
-            "password": "$2a$10$PRIgIlqUe4L.r0meKMY55Oli7tbcwamiB/eoVY4aClFyL7LWqU/yi",
-            "isAdmin": false,
-            "image": 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQurVSyRPD_h5qpfmZ-3E38gDcBeJztDVR8y2atE21PzUNcYGPkNRg7ZARrpRq9BC2uGdM&usqp=CAU',
-            "createdAt": "2022-04-18T10:28:21.000Z",
-            "updatedAt": "2022-04-18T10:28:21.000Z",
-            "Followers": [],
-            "FollowerCount": 0,
-            "isFollowed": false
-        }
-    ]
-}
+
+import { mapState } from 'vuex'
+import usersAPI from './../apis/users'
+import { Toast } from './../utils/helpers'
+
 
 export default {
   data(){
     return {
-      user: {},
-      editingName:'',
+      id: 0,
+      image: '',
+      name: '',
+      email: '',
+      isProcessing: false
     }
   },
   methods: {
+    setUser () {
+      this.id = this.currentUser.id
+      this.image = this.currentUser.image
+      this.name = this.currentUser.name
+      this.email = this.currentUser.email
+    },
     handleFileChange(e){
       const { files } = e.target
       if (!files.length){
@@ -106,18 +77,66 @@ export default {
         this.user.image = imgURL
       }
     },
-    handleSubmit(e){
+    async handleSubmit(e){
+
+      if (this.name){
+        Toast.fire({
+          type: 'warning',
+          title: '您尚未填寫姓名'
+        })
+        return
+      }
+
       const form = e.target
       const formData = new FormData(form)
-      formData.name = this.editingName
-      for (let [name,value] of formData.entries()){
-        console.log(`${name}: ${value}`)
+
+      try {
+        this.isProcessing = true
+
+        const { data, statusText } = await usersAPI.update({
+          userId: this.id,
+          formData
+        })
+
+        if (statusText !== 'OK' || data.status !== 'success') {
+          throw new Error(statusText)
+        }
+
+        this.$router.push({ name: 'user', params: { id: this.id } })
+      } catch (error){
+        this.isProcessing = false
+        Toast.fire({
+          type: 'error',
+          title: '無法更新使用者資料，請稍後再試'
+        })
       }
     }
   },
+  computed: {
+    ...mapState(['currentUser'])
+  },
+  watch: {
+    // eslint-disable-next-line
+    currentUser (user) {
+      this.setUser()
+    }
+  },
   created(){
-    const users = dummyData.users
-    this.user = users.find(e => e.id === 1)
-  }
+    const { id } = this.$route.params
+    if (id.toString() !== this.currentUser.id.toString()) {
+      this.$router.push({ name: 'not-found' })
+      return
+    }
+    this.setUser()
+  },
+  beforeRouteUpdate (to, from, next) {
+    const { id } = to.params
+    if (id.toString() !== this.currentUser.id.toString()) {
+      this.$router.push({ name: 'not-found' })
+      return
+    }
+    this.setUser()
+    next()
+  },
 }
 </script>
